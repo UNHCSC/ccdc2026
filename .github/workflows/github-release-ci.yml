@@ -1,0 +1,37 @@
+name: Github Release Automation
+
+on:
+    push:
+        branches: 
+            - main
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout git repo
+              uses: actions/checkout@v6
+
+            - name: Set release tag
+              run: echo "RELEASE_TAG=commit-${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+            - name: Zip contents of repo
+              run: zip -r ccdc26-${RELEASE_TAG}.zip . -x ".git/*" ".github/*" "README.md"
+
+            - name: Create GitHub release
+              uses: softprops/action-gh-release@v1
+              with:
+                tag_name: ${{ env.RELEASE_TAG }}
+                name: Release ${{ env.RELEASE_TAG }}
+                body: "Automated release for commit ${{ github.sha }}"
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Upload zip of repo
+              uses: softprops/action-gh-release@v1
+              with:
+                tag_name: ${{ env.RELEASE_TAG }}
+                name: ccdc26-${{ env.RELEASE_TAG }}.zip
+                asset_path: ccdc26-${{ env.RELEASE_TAG }}.zip
+              env:
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
